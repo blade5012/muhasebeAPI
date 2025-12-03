@@ -1,0 +1,192 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yıllık Gelir Gider Grafiği</title>
+
+    <!-- PWA: Dynamic Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <!-- Android / Chrome Theme -->
+    <meta name="theme-color" content="#ffffff">
+    <!-- iPhone / Safari Support -->
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Muhasebe API">
+    <!-- Favicon -->
+    <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
+    <!-- Service Worker (optional but recommended) -->
+    <!--
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.log('SW register failed: ', err);
+                });
+            });
+        }
+    </script>
+    -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: "Segoe UI", Arial;
+            background: #f4f8fb; /* Diğer sayfalarla uyumlu düz arka plan */
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #2c3e50; /* Diğer sayfalarla uyumlu renk */
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        select {
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        canvas {
+            display: block;
+            width: 100% !important;
+            max-width: 800px;
+            height: 400px !important;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            padding: 10px;
+        }
+
+        /* Alert mesajları */
+        #alertBox {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 18px;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 600;
+            display: none;
+            z-index: 2000;
+            min-width: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+            #alertBox.success {
+                background-color: #28a745;
+            }
+
+            #alertBox.warning {
+                background-color: #ffc107;
+                color: #333;
+            }
+
+            #alertBox.error {
+                background-color: #e74c3c;
+            }
+    </style>
+    <!--
+    <script>
+        function showAlert(type, msg) {
+            const box = document.getElementById('alertBox');
+            box.className = type;
+            box.textContent = msg;
+            box.style.display = 'block';
+            setTimeout(() => box.style.display = 'none', 2500);
+        }
+    </script>
+    -->
+</head>
+<body>
+    <script src="config.js"></script>
+    <div class="topbar">
+        <label for="yilSec" style="margin-right:8px;">Yıl:</label>
+        <select id="yilSec" onchange="loadGrafik()"></select>
+    </div>
+
+    <h2 id="grafikBaslik">📊 Yıllık Gelir - Gider Grafiği</h2>
+    <canvas id="gelirGiderChart"></canvas>
+    <div id="alertBox"></div>
+
+    <script>
+        let chart;
+        const ctx = document.getElementById('gelirGiderChart').getContext('2d');
+
+        async function loadYillar() {
+            const response = await fetch(`${apiBase}/grafik/yillar`);
+            const yillar = await response.json();
+            const yilSec = document.getElementById('yilSec');
+            yilSec.innerHTML = "";
+            yillar.forEach(yil => {
+                const opt = document.createElement("option");
+                opt.value = yil;
+                opt.textContent = yil;
+                yilSec.appendChild(opt);
+            });
+            loadGrafik();
+        }
+
+        async function loadGrafik() {
+            const yil = document.getElementById('yilSec').value;
+            const baslik = document.getElementById('grafikBaslik');
+            baslik.textContent = `📊 ${yil} Yılı Gelir - Gider Grafiği`; // ✅ Yıl başlığa eklendi
+
+            const response = await fetch(`${apiBase}/grafik/${yil}`);
+            const data = await response.json();
+
+            if (!data || data.length === 0) {
+                showAlert('warning', '⚠️ Bu yıl için veri bulunamadı.');
+                return;
+            }
+
+            const labels = data.map(x => x.ay);
+            const gelirler = data.map(x => x.gelir);
+            const giderler = data.map(x => x.gider);
+
+            if (chart) chart.destroy();
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Gelir',
+                            data: gelirler,
+                            backgroundColor: 'rgba(0,200,83,0.7)',
+                            borderColor: 'green',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Gider',
+                            data: giderler,
+                            backgroundColor: 'rgba(244,67,54,0.7)',
+                            borderColor: 'red',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        window.onload = loadYillar;
+    </script>
+</body>
+</html>

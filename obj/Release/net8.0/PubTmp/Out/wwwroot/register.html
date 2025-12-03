@@ -1,0 +1,143 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muhasebe API - Kayıt Ol</title>
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
+    <link rel="icon" href="/icons/favicon.ico">
+
+    <style>
+        body {
+            font-family: "Segoe UI", Arial;
+            background: #f4f8fb;
+            margin: 0;
+            padding: 20px;
+            max-width: 480px;
+            margin: auto;
+        }
+
+        #logo {
+            width: 130px;
+            display: block;
+            margin: 30px auto 15px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 17px;
+        }
+
+        #submitRegister {
+            background: #3498db;
+            color: white;
+        }
+
+            #submitRegister:hover {
+                background: #2980b9;
+            }
+
+        a {
+            text-align: center;
+            color: #3498db;
+            display: block;
+            margin-top: 15px;
+            text-decoration: underline;
+        }
+
+        /* ALERT BOX */
+        #alertBox {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 99991;
+        }
+
+        .alert-box {
+            padding: 14px 20px;
+            margin-top: 10px;
+            border-radius: 8px;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: fadeInRight 0.35s ease-out;
+            font-size: 15px;
+            max-width: 280px;
+        }
+
+        .alert-success {
+            background: #28a745;
+        }
+
+        .alert-error {
+            background: #dc3545;
+        }
+
+        .alert-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .alert-info {
+            background: #17a2b8;
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <img id="logo" src="logo.png" alt="Logo">
+
+    <h2>Yeni Kullanıcı Kayıt</h2>
+
+    <div id="alertBox"></div>
+
+    <form id="registerForm">
+        <input type="email" id="email" placeholder="E-posta" required>
+        <input type="text" id="username" placeholder="Kullanıcı Adı">
+        <input type="password" id="password" placeholder="Şifre" required minlength="6" pattern="(?=.*[a-z])(?=.*[A-Z]).{6,}" title="Şifre en az 6 karakter, bir büyük harf ve bir küçük harf içermelidir.">
+        <input type="password" id="confirmPassword" placeholder="Şifre Tekrar" required minlength="6" pattern="(?=.*[a-z])(?=.*[A-Z]).{6,}" title="Şifre en az 6 karakter, bir büyük harf ve bir küçük harf içermelidir.">
+        <button type="submit" id="submitRegister">Kayıt Ol</button>
+    </form>
+
+    <a href="login.html">Geri Dön</a>
+
+    <!-- Gerekli Scriptler -->
+    <script src="config.js"></script>
+    <script src="register.js"></script>
+
+</body>
+</html>

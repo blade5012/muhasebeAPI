@@ -1,0 +1,436 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kategoriler</title>
+
+    <!-- PWA: Dynamic Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <!-- Android / Chrome Theme -->
+    <meta name="theme-color" content="#ffffff">
+    <!-- iPhone / Safari Support -->
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Muhasebe API">
+    <!-- Favicon -->
+    <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
+    <!-- Service Worker (optional but recommended) -->
+    <!--
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.log('SW register failed: ', err);
+                });
+            });
+        }
+    </script>
+    -->
+
+    <style>
+        body {
+            font-family: "Segoe UI", Arial; /* Diğer sayfalarla uyumlu font */
+            background: #f4f8fb; /* Diğer sayfalarla uyumlu düz arka plan */
+            margin: 0;
+            padding: 20px;
+            max-width: 480px;
+            margin: auto;
+        }
+
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        #kategoriForm {
+            display: grid;
+            grid-template-columns: 2fr 1.2fr 0.8fr;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        input, select, button {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 15px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+            button:hover {
+                background-color: #2980b9;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 15px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background: #bfe3ff;
+        }
+
+        .gelir-row {
+            background-color: #d9fdd3 !important;
+        }
+
+        .gider-row {
+            background-color: #ffd6d6 !important;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+            .delete-btn:hover {
+                background: #c0392b;
+            }
+
+        .edit-btn {
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+            .edit-btn:hover {
+                background: #d68910;
+            }
+
+        /* Alert mesajları */
+        #alertBox {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 18px;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 600;
+            display: none;
+            z-index: 2000;
+            min-width: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+            #alertBox.success {
+                background-color: #28a745;
+            }
+
+            #alertBox.warning {
+                background-color: #ffc107;
+                color: #333;
+            }
+
+            #alertBox.error {
+                background-color: #e74c3c;
+            }
+
+        /* Modal */
+        #editModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(3px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.3s ease;
+        }
+
+            #editModal .modal-content {
+                background: linear-gradient(145deg, #fdfdfd, #f0f8ff);
+                padding: 25px 20px;
+                border-radius: 14px;
+                width: 340px;
+                max-width: 90%;
+                box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+                transform: translateY(-30px);
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+
+            #editModal.show .modal-content {
+                transform: translateY(0);
+            }
+
+            #editModal h3 {
+                margin-top: 0;
+                text-align: center;
+                font-weight: 700;
+                color: #ff7f50;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+                margin-bottom: 20px;
+            }
+
+            #editModal select, #editModal input {
+                width: 100%;
+                padding: 10px 12px;
+                margin-bottom: 15px;
+                border: 1px solid #ccc;
+                border-radius: 10px;
+                font-size: 14px;
+                background: #fffbe6;
+                transition: border 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
+            }
+
+                #editModal select:focus, #editModal input:focus {
+                    border-color: #ff7f50;
+                    box-shadow: 0 0 8px rgba(255,127,80,0.4);
+                    outline: none;
+                }
+
+            #editModal .modal-buttons {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+
+            #editModal button:first-child {
+                background: #28a745;
+                color: #fff;
+                box-shadow: 0 4px 6px rgba(40,167,69,0.3);
+            }
+
+                #editModal button:first-child:hover {
+                    background: #218838;
+                    transform: scale(1.05);
+                    box-shadow: 0 6px 10px rgba(33,136,56,0.3);
+                }
+
+            #editModal button:last-child {
+                background: #ffc107;
+                color: #333;
+                box-shadow: 0 4px 6px rgba(255,193,7,0.3);
+            }
+
+                #editModal button:last-child:hover {
+                    background: #e0a800;
+                    transform: scale(1.05);
+                    box-shadow: 0 6px 10px rgba(224,168,0,0.3);
+                }
+
+    </style>
+</head>
+<body>
+    <script src="config.js"></script>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <button onclick="cikisYap()" style="background-color: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">Çıkış Yap</button>
+        <h2 style="margin: 0; flex: 1; text-align: center;">Kategoriler</h2>
+        <div style="width: 120px;"></div>
+    </div>
+
+    <div id="alertBox"></div>
+    <input type="text" id="kategoriFilter" placeholder="Kategori ara..." style="width:100%; margin-bottom:8px;">
+
+    <div id="kategoriForm">
+        <input type="text" id="kategoriAdi" placeholder="Kategori Adı">
+        <select id="kategoriTur">
+            <option value="">Tür Seçin</option>
+            <option value="Gelir">Gelir</option>
+            <option value="Gider">Gider</option>
+        </select>
+        <button onclick="addKategori()">Ekle</button>
+    </div>
+
+    <table id="kategoriTable">
+        <thead>
+            <tr><th>Sıra</th><th>Kategori</th><th>Tür</th><th>İşlem</th></tr>
+        </thead>
+        <tbody></tbody>
+
+
+    </table>
+    <p id="toplamKategori" style="margin-top:10px; font-weight:600;"></p>
+    <!-- Düzenleme Modal -->
+    <div id="editModal">
+        <div class="modal-content">
+            <h3>Düzenle Kategori</h3>
+            <input type="text" id="editKategoriAdi" placeholder="Kategori Adı">
+            <select id="editKategoriTur">
+                <option value="">Tür Seçin</option>
+                <option value="Gelir">Gelir</option>
+                <option value="Gider">Gider</option>
+            </select>
+            <div class="modal-buttons">
+                <button onclick="saveEdit()">Kaydet</button>
+                <button onclick="closeEdit()">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Çıkış fonksiyonu
+        function cikisYap() {
+            if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+                sessionStorage.removeItem('isLoggedIn');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Sayfa yüklendiğinde oturum kontrolü yap
+        document.addEventListener("DOMContentLoaded", () => {
+            // Oturum kontrolü
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+            if (!isLoggedIn) {
+                alert('Lütfen giriş yapın!');
+                window.location.href = 'login.html';
+                return;
+            }
+            // Oturum varsa kategorileri yükle
+            loadKategoriler();
+        });
+
+        let editId = null;
+        let originalName = "";
+
+        function showAlert(type, msg) {
+            const box = document.getElementById('alertBox');
+            box.className = type;
+            box.textContent = msg;
+            box.style.display = 'block';
+            setTimeout(() => box.style.display = 'none', 2500);
+        }
+
+        // ----------------- LOAD -----------------
+        async function loadKategoriler() {
+            try {
+                const res = await fetch(`${apiBase}/kategoriler`);
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`HTTP error! status: ${res.status}, message: ${errorText}`);
+                }
+                const data = await res.json();
+                const tbody = document.querySelector("#kategoriTable tbody");
+                tbody.innerHTML = "";
+                let sira = 1;
+                data.forEach(k => {
+                    const cls = k.tur === "Gelir" ? "gelir-row" : "gider-row";
+                    tbody.innerHTML += `<tr class="${cls}" data-id="${k.kategoriID}">
+                            <td>${sira++}</td>
+                            <td>${k.kategoriAdi}</td>
+                            <td>${k.tur}</td>
+                            <td>
+                                <button class="edit-btn" onclick="openEdit(${k.kategoriID},'${k.kategoriAdi}','${k.tur}')">✏️ </button>
+                                <button class="delete-btn" onclick="deleteKategori(${k.kategoriID},'${k.kategoriAdi}')">🗑️ </button>
+                            </td>
+                        </tr>`;
+                    document.getElementById("toplamKategori").textContent = `📊 Toplam kategori sayısı: ${data.length}`;
+                });
+            } catch (error) {
+                console.error("Kategoriler yüklenirken hata oluştu:", error);
+                showAlert('error', `❌ Kategoriler yüklenemedi: ${error.message}`);
+            }
+        }
+
+        // ----------------- ADD -----------------
+        async function addKategori() {
+            const adi = document.getElementById("kategoriAdi").value.trim();
+            const tur = document.getElementById("kategoriTur").value;
+            if (!adi || !tur) return showAlert('warning', '⚠️ Kategori adı ve tür seçin');
+
+            // Aynı isim kontrolü
+            const existing = Array.from(document.querySelectorAll("#kategoriTable tbody tr td:nth-child(2)"))
+                .map(td => td.innerText.toLowerCase());
+            if (existing.includes(adi.toLowerCase())) return showAlert('warning', `⚠️ "${adi}" zaten mevcut`);
+
+            const res = await fetch(`${apiBase}/kategoriler`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ kategoriAdi: adi, tur: tur })
+            });
+
+            if (res.ok) {
+                showAlert('success', `✅ "${adi}" eklendi`);
+                document.getElementById("kategoriAdi").value = "";
+                loadKategoriler();
+            } else showAlert('error', await res.text());
+        }
+
+        // ----------------- DELETE -----------------
+        async function deleteKategori(id, adi) {
+            if (!confirm(`❌ "${adi}" silinsin mi?`)) return;
+            const res = await fetch(`${apiBase}/kategoriler/${id}`, { method: "DELETE" });
+            if (res.ok) {
+                showAlert('success', `✅ "${adi}" silindi`);
+                loadKategoriler();
+            } else showAlert('error', await res.text());
+        }
+
+        // ----------------- EDIT -----------------
+        function openEdit(id, adi, tur) {
+            editId = id;
+            originalName = adi;
+            document.getElementById("editKategoriAdi").value = adi;
+            document.getElementById("editKategoriTur").value = tur;
+            const modal = document.getElementById("editModal");
+            modal.style.display = "flex";
+            setTimeout(() => modal.classList.add("show"), 10);
+        }
+
+        function closeEdit() {
+            const modal = document.getElementById("editModal");
+            modal.classList.remove("show");
+            setTimeout(() => modal.style.display = "none", 300);
+        }
+
+        async function saveEdit() {
+            const adi = document.getElementById("editKategoriAdi").value.trim();
+            const tur = document.getElementById("editKategoriTur").value;
+            if (!adi || !tur) return showAlert('warning', '⚠️ Kategori adı ve tür seçin');
+
+            // Kendi adı hariç kontrol
+            const existing = Array.from(document.querySelectorAll("#kategoriTable tbody tr td:nth-child(2)"))
+                .map(td => td.innerText.toLowerCase())
+                .filter(name => name !== originalName.toLowerCase());
+            if (existing.includes(adi.toLowerCase())) return showAlert('warning', `⚠️ "${adi}" zaten mevcut`);
+
+            const res = await fetch(`${apiBase}/kategoriler/${editId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ kategoriAdi: adi, tur: tur })
+            });
+
+            if (res.ok) {
+                showAlert('success', `✅ "${adi}" güncellendi`);
+                closeEdit();
+                loadKategoriler();
+            } else showAlert('error', await res.text());
+        }
+
+        // ----------------- FILTER -----------------
+        document.getElementById("kategoriFilter").addEventListener("input", e => {
+            const filter = e.target.value.toLowerCase();
+            document.querySelectorAll("#kategoriTable tbody tr").forEach(r => {
+                const name = r.cells[1].textContent.toLowerCase();
+                r.style.display = name.includes(filter) ? "" : "none";
+            });
+        });
+    </script>
+</body>
+</html>

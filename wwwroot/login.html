@@ -1,0 +1,196 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muhasebe API - Giriş</title>
+
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- iOS -->
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: #f4f8fb;
+            margin: 0;
+            padding: 20px;
+            max-width: 480px;
+            margin: auto;
+        }
+
+        #logo {
+            width: 130px;
+            display: block;
+            margin: 30px auto;
+        }
+
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 17px;
+        }
+
+        #loginButton {
+            background: #3498db;
+            color: white;
+        }
+
+            #loginButton:hover {
+                background: #2980b9;
+            }
+
+        #forgotLink,
+        #registerLink {
+            display: block;
+            text-align: center;
+            margin-top: 12px;
+            color: #3498db;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* ALERT BOX */
+        #alertBox {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 99991;
+        }
+
+        .alert-box {
+            padding: 14px 20px;
+            margin-top: 10px;
+            border-radius: 8px;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: fadeInRight 0.35s ease-out;
+            font-size: 15px;
+            max-width: 280px;
+        }
+
+        .alert-success {
+            background: #28a745;
+        }
+
+        .alert-error {
+            background: #dc3545;
+        }
+
+        .alert-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .alert-info {
+            background: #17a2b8;
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* MODAL */
+        #forgotModal {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.55);
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 25px;
+            width: 90%;
+            max-width: 420px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        #closeModal {
+            background: #dc3545;
+            color: white;
+            margin-top: 10px;
+        }
+
+        #sendReset {
+            background: #3498db;
+            color: white;
+        }
+    </style>
+
+</head>
+<body>
+
+    <img id="logo" src="logo.png" alt="Logo">
+
+    <h2>Giriş Yap</h2>
+
+    <!-- ALERTBOX (ZORUNLU) -->
+    <div id="alertBox"></div>
+
+    <form id="loginForm">
+        <input type="text" id="email" placeholder="E-posta" required>
+        <input type="password" id="password" placeholder="Şifre" required>
+        <button id="loginButton" type="submit">Giriş Yap</button>
+    </form>
+
+    <span id="forgotLink">Şifremi Unuttum</span>
+
+    <!-- ⭐️ KAYIT OL LİNKİ GERİ EKLENDİ -->
+    <span id="registerLink" onclick="window.location.href='register.html'">Kayıt Ol</span>
+
+    <!-- ŞİFREMİ UNUTTUM MODALI -->
+    <div id="forgotModal">
+        <div class="modal-content">
+            <h3>Şifre Sıfırlama</h3>
+            <input type="text" id="forgotEmail" placeholder="E-posta adresiniz">
+            <p id="forgotMsg" style="color: red; text-align: center; margin-top: 10px;"></p> <!-- Mesajlar buraya yazılacak -->
+            <button id="sendReset">Sıfırlama Linki Gönder</button>
+            <button id="closeModal">Kapat</button>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="login.js"></script>
+
+</body>
+</html>
