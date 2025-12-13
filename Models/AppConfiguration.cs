@@ -4,6 +4,6 @@ namespace MuhasebeAPI.Models
 {
     public class AppConfiguration
     {
-        public string BaseUrl { get; set; }
+        public string? BaseUrl { get; set; }
     }
 }

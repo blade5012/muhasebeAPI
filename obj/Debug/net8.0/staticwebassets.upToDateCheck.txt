@@ -1,4 +1,5 @@
 wwwroot\admin.html
+wwwroot\admin.js
 wwwroot\app.js
 wwwroot\config.js
 wwwroot\fonts\segoeui.ttf
@@ -38,12 +39,11 @@ wwwroot\icons\icon-192.png
 wwwroot\icons\icon-512.png
 wwwroot\kategoriler.html
 wwwroot\login.html
-wwwroot\reset.js
+wwwroot\login.js
 wwwroot\logo.png
 wwwroot\manifest.json
-wwwroot\resetpassword.html
-wwwroot\login.js
-wwwroot\register.js
 wwwroot\register.html
+wwwroot\register.js
+wwwroot\reset.js
+wwwroot\resetpassword.html
 wwwroot\sw.js
-wwwroot\admin.js

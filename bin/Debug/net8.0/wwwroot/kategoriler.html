@@ -23,9 +23,8 @@
                 navigator.serviceWorker.register('/sw.js').catch(err => {
                     console.log('SW register failed: ', err);
                 });
-            });
-        }
-    </script>
+            }
+        </script>
     -->
 
     <style>
@@ -33,91 +32,207 @@
             font-family: "Segoe UI", Arial; /* Diğer sayfalarla uyumlu font */
             background: #f4f8fb; /* Diğer sayfalarla uyumlu düz arka plan */
             margin: 0;
-            padding: 20px;
-            max-width: 480px;
-            margin: auto;
+            padding: 0; /* Padding main-container'a taşındı */
+            color: #2c3e50;
         }
+        .main-container {
+            max-width: 480px; /* İçeriğin genişliğini sınırlama */
+            margin: auto; /* Ortalamak için */
+            padding: 20px; /* Sayfa kenar boşluğu */
+        }
+        /* Başlık ve Çıkış Butonunu içeren konteyner */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px; /* Alt boşluk artırıldı */
+            padding: 10px 0; /* Üst ve alt boşluk */
+        }
+        /* Çıkış Yap Butonu */
+        .logout-btn {
+            background-color: #e74c3c; /* Kırmızı tonu */
+            color: white;
+            border: none;
+            padding: 10px 18px; /* Padding ayarlandı */
+            border-radius: 8px; /* Daha yuvarlak köşeler */
+            cursor: pointer;
+            font-size: 14px; /* Mobil için biraz küçültüldü */
+            font-weight: 600; /* Kalın font */
+            box-shadow: 0 4px 10px rgba(231,76,60,0.25); /* Daha belirgin gölge */
+            transition: all 0.3s ease; /* Yumuşak geçiş */
+        }
+
+            .logout-btn:hover {
+                background-color: #c0392b; /* Daha koyu kırmızı */
+                transform: translateY(-2px); /* Hafif yukarı kayma */
+                box-shadow: 0 6px 15px rgba(192,57,43,0.35); /* Daha belirgin hover gölge */
+            }
 
         h2 {
             text-align: center;
-            color: #2c3e50;
+            color: #1a237e; /* Koyu lacivert */
+            margin: 0; /* Header container içinde olduğu için margin 0 */
+            flex: 1; /* Ortalamak için */
+            font-size: 26px; /* Biraz küçültüldü */
+            font-weight: 800; /* Daha kalın font */
+            letter-spacing: 1.2px; /* Harf aralığı */
+            text-transform: uppercase; /* Büyük harfler */
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1); /* Hafif gölge */
         }
+
+        .header-placeholder {
+            width: 96px; /* Logout butonuyla aynı genişlik */
+            /* Logout butonu padding: 10px 18px = toplam genişlikte 18*2 + content-width = 36 + 60 (tahmini) = 96px */
+            /* Font-size: 14px, 7 karakter = 14*7 = 98 - padding + border hesaplanmalı. Tam eşitlik için JS ile ölçüm yapılabilir, şimdilik manuel değer */
+        }
+
+        #kategoriFilter {
+            width: calc(100% - 2px); /* Border için 2px çıkarıldı */
+            margin: 0 auto 20px auto; /* Üst ve alt boşluklar ayarlandı */
+            display: block;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #d0d0d0;
+            font-size: 16px;
+            box-sizing: border-box;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+            transition: all 0.2s ease;
+        }
+
+            #kategoriFilter:focus {
+                border-color: #3498db;
+                box-shadow: 0 0 12px rgba(52,152,219,0.25);
+                outline: none;
+            }
 
         #kategoriForm {
-            display: grid;
-            grid-template-columns: 2fr 1.2fr 0.8fr;
-            gap: 8px;
-            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+            margin-bottom: 30px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
         }
 
-        input, select, button {
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 15px;
-        }
-
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-            button:hover {
-                background-color: #2980b9;
+            /* Genel input ve select stili */
+            #kategoriForm input,
+            #kategoriForm select {
+                padding: 12px;
+                border-radius: 8px;
+                border: 1px solid #d0d0d0;
+                font-size: 16px;
+                box-sizing: border-box;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                transition: all 0.2s ease;
             }
+
+                #kategoriForm input:focus,
+                #kategoriForm select:focus {
+                    border-color: #3498db;
+                    box-shadow: 0 0 12px rgba(52,152,219,0.25);
+                    outline: none;
+                }
+
+            #kategoriForm input#kategoriAdi {
+                flex: 1 1 100%;
+                width: 100%;
+            }
+
+            #kategoriForm select#kategoriTur,
+            #kategoriForm button {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            #kategoriForm button {
+                background-color: #2ecc71;
+                color: white;
+                border: none;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-weight: 700;
+                box-shadow: 0 4px 10px rgba(46,204,113,0.25);
+            }
+
+                #kategoriForm button:hover {
+                    background-color: #27ae60;
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 15px rgba(39,174,96,0.35);
+                }
+
+        .table-responsive { /* Yeni eklendi */
+            overflow-x: auto;
+            margin-top: 20px;
+        }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            /* margin-top kaldırıldı, table-responsive içinde */
             font-size: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            overflow: hidden;
         }
 
         th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            text-align: right;
+        }
+
+        th:nth-child(1),
+        td:nth-child(1) {
+            text-align: center;
+            width: 10%;
+        }
+
+        th:nth-child(2),
+        td:nth-child(2) {
             text-align: left;
+            width: 40%;
         }
 
         th {
-            background: #bfe3ff;
+            background: #a9d6f8;
+            color: #1a237e;
+            font-weight: 700;
         }
 
         .gelir-row {
-            background-color: #d9fdd3 !important;
+            background-color: #e6ffed !important;
         }
 
         .gider-row {
-            background-color: #ffd6d6 !important;
+            background-color: #ffe6e6 !important;
+        }
+
+        .delete-btn, .edit-btn {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-left: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .delete-btn {
-            background: #e74c3c;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 6px;
-            cursor: pointer;
+            background: #dc3545;
         }
 
             .delete-btn:hover {
-                background: #c0392b;
+                background: #c82333;
             }
 
         .edit-btn {
-            background: #f39c12;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 6px;
-            cursor: pointer;
+            background: #ffc107;
+            color: #333;
         }
 
             .edit-btn:hover {
-                background: #d68910;
+                background: #e0a800;
             }
 
         /* Alert mesajları */
@@ -125,14 +240,14 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            padding: 12px 18px;
+            padding: 14px 20px;
             border-radius: 10px;
             color: #fff;
             font-weight: 600;
             display: none;
             z-index: 2000;
-            min-width: 200px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            min-width: 220px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
         }
 
             #alertBox.success {
@@ -145,7 +260,7 @@
             }
 
             #alertBox.error {
-                background-color: #e74c3c;
+                background-color: #dc3545;
             }
 
         /* Modal */
@@ -156,8 +271,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(3px);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -165,12 +280,12 @@
         }
 
             #editModal .modal-content {
-                background: linear-gradient(145deg, #fdfdfd, #f0f8ff);
-                padding: 25px 20px;
-                border-radius: 14px;
-                width: 340px;
+                background: linear-gradient(145deg, #ffffff, #f7f9fc);
+                padding: 30px 25px;
+                border-radius: 16px;
+                width: 360px;
                 max-width: 90%;
-                box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+                box-shadow: 0 15px 30px rgba(0,0,0,0.35);
                 transform: translateY(-30px);
                 transition: transform 0.3s ease, box-shadow 0.3s ease;
             }
@@ -183,106 +298,175 @@
                 margin-top: 0;
                 text-align: center;
                 font-weight: 700;
-                color: #ff7f50;
-                text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-                margin-bottom: 20px;
+                color: #ff6347;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+                margin-bottom: 25px;
             }
 
             #editModal select, #editModal input {
                 width: 100%;
-                padding: 10px 12px;
-                margin-bottom: 15px;
-                border: 1px solid #ccc;
+                padding: 12px 15px;
+                margin-bottom: 18px;
+                border: 1px solid #dcdcdc;
                 border-radius: 10px;
-                font-size: 14px;
-                background: #fffbe6;
+                font-size: 15px;
+                background: #fdfdfd;
                 transition: border 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
             }
 
                 #editModal select:focus, #editModal input:focus {
-                    border-color: #ff7f50;
-                    box-shadow: 0 0 8px rgba(255,127,80,0.4);
+                    border-color: #ff6347;
+                    box-shadow: 0 0 10px rgba(255,99,71,0.3);
                     outline: none;
                 }
 
             #editModal .modal-buttons {
                 display: flex;
                 justify-content: flex-end;
-                gap: 10px;
+                gap: 12px;
+                margin-top: 20px;
             }
 
             #editModal button:first-child {
                 background: #28a745;
                 color: #fff;
-                box-shadow: 0 4px 6px rgba(40,167,69,0.3);
+                box-shadow: 0 4px 8px rgba(40,167,69,0.25);
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-size: 15px;
             }
 
                 #editModal button:first-child:hover {
                     background: #218838;
-                    transform: scale(1.05);
-                    box-shadow: 0 6px 10px rgba(33,136,56,0.3);
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 12px rgba(33,136,56,0.3);
                 }
 
             #editModal button:last-child {
-                background: #ffc107;
-                color: #333;
-                box-shadow: 0 4px 6px rgba(255,193,7,0.3);
+                background: #6c757d;
+                color: #fff;
+                box-shadow: 0 4px 8px rgba(108,117,125,0.25);
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-size: 15px;
             }
 
                 #editModal button:last-child:hover {
-                    background: #e0a800;
-                    transform: scale(1.05);
-                    box-shadow: 0 6px 10px rgba(224,168,0,0.3);
+                    background: #5a6268;
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 12px rgba(90,98,104,0.3);
                 }
 
+        @media (max-width: 600px) {
+            .logout-btn {
+                font-size: 13px; /* Mobil için daha küçük font */
+                padding: 8px 15px;
+            }
+            h2 {
+                font-size: 22px; /* Mobil için daha küçük başlık */
+                letter-spacing: 1px;
+            }
+            .header-container {
+                 margin-bottom: 20px;
+                 padding: 8px 0;
+                 gap: 15px; /* Mobil için gap ayarı */
+            }
+            #kategoriFilter {
+                padding: 10px;
+                font-size: 15px;
+            }
+            #kategoriForm input#kategoriAdi,
+            #kategoriForm select#kategoriTur,
+            #kategoriForm button {
+                flex: 1 1 100%; /* Mobil cihazlarda tek sütun */
+                max-width: 100%;
+                font-size: 15px;
+                padding: 10px;
+            }
+            #toplamKategori {
+                font-size: 16px;
+                padding: 8px 0;
+            }
+            #editModal .modal-content {
+                padding: 20px;
+            }
+            table {
+                font-size: 13px;
+            }
+            th, td {
+                padding: 8px;
+            }
+            .delete-btn, .edit-btn {
+                padding: 6px 10px;
+                font-size: 13px;
+                margin-left: 5px;
+            }
+        }
+
+        /* Toplam Kategori Paragrafı */
+        #toplamKategori {
+            margin-top: 25px;
+            font-weight: 700;
+            font-size: 18px;
+            color: #1a237e;
+            text-align: center;
+            padding: 10px 0;
+            background: #e3f2fd;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
     </style>
 </head>
 <body>
     <script src="config.js"></script>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <button onclick="cikisYap()" style="background-color: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">Çıkış Yap</button>
-        <h2 style="margin: 0; flex: 1; text-align: center;">Kategoriler</h2>
-        <div style="width: 120px;"></div>
-    </div>
+    <div class="main-container"> <!-- Yeni eklenen konteyner -->
+        <div class="header-container"> <!-- Stil sınıfına dönüştürüldü -->
+            <button onclick="cikisYap()" class="logout-btn">Çıkış Yap</button>
+            <h2>Kategoriler</h2>
+            <div class="header-placeholder"></div> <!-- Başlığı ortalamak için boşluk öğesi -->
+        </div>
 
-    <div id="alertBox"></div>
-    <input type="text" id="kategoriFilter" placeholder="Kategori ara..." style="width:100%; margin-bottom:8px;">
+        <div id="alertBox"></div>
+        <input type="text" id="kategoriFilter" placeholder="Kategori ara...">
 
-    <div id="kategoriForm">
-        <input type="text" id="kategoriAdi" placeholder="Kategori Adı">
-        <select id="kategoriTur">
-            <option value="">Tür Seçin</option>
-            <option value="Gelir">Gelir</option>
-            <option value="Gider">Gider</option>
-        </select>
-        <button onclick="addKategori()">Ekle</button>
-    </div>
-
-    <table id="kategoriTable">
-        <thead>
-            <tr><th>Sıra</th><th>Kategori</th><th>Tür</th><th>İşlem</th></tr>
-        </thead>
-        <tbody></tbody>
-
-
-    </table>
-    <p id="toplamKategori" style="margin-top:10px; font-weight:600;"></p>
-    <!-- Düzenleme Modal -->
-    <div id="editModal">
-        <div class="modal-content">
-            <h3>Düzenle Kategori</h3>
-            <input type="text" id="editKategoriAdi" placeholder="Kategori Adı">
-            <select id="editKategoriTur">
+        <div id="kategoriForm">
+            <input type="text" id="kategoriAdi" placeholder="Kategori Adı">
+            <select id="kategoriTur">
                 <option value="">Tür Seçin</option>
                 <option value="Gelir">Gelir</option>
                 <option value="Gider">Gider</option>
             </select>
-            <div class="modal-buttons">
-                <button onclick="saveEdit()">Kaydet</button>
-                <button onclick="closeEdit()">İptal</button>
+            <button onclick="addKategori()">Ekle</button>
+        </div>
+
+        <div class="table-responsive"> <!-- Tablo responsive konteyneri -->
+            <table id="kategoriTable">
+                <thead>
+                    <tr><th>Sıra</th><th>Kategori</th><th>Tür</th><th>İşlem</th></tr>
+                </thead>
+                <tbody></tbody>
+
+
+            </table>
+        </div>
+        <p id="toplamKategori"></p>
+        <!-- Düzenleme Modal -->
+        <div id="editModal">
+            <div class="modal-content">
+                <h3>Düzenle Kategori</h3>
+                <input type="text" id="editKategoriAdi" placeholder="Kategori Adı">
+                <select id="editKategoriTur">
+                    <option value="">Tür Seçin</option>
+                    <option value="Gelir">Gelir</option>
+                    <option value="Gider">Gider</option>
+                </select>
+                <div class="modal-buttons">
+                    <button onclick="saveEdit()">Kaydet</button>
+                    <button onclick="closeEdit()">İptal</button>
+                </div>
             </div>
         </div>
-    </div>
+    </div> <!-- main-container sonu -->
 
     <script>
         // Çıkış fonksiyonu

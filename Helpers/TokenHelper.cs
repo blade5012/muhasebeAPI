@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using Microsoft.Extensions.Configuration; // IConfiguration için
+using System.Collections.Generic; // List için
 
 namespace MuhasebeAPI.Helpers
 {
@@ -39,7 +40,7 @@ namespace MuhasebeAPI.Helpers
             }
         }
 
-        public static string GenerateJwtToken(int userId, string email, string role)
+        public static string GenerateJwtToken(int userId, string email, string role, string username) // username parametresi eklendi
         {
             Console.WriteLine("GenerateJwtToken çağrıldı.");
             var jwtSettings = _configuration.GetSection("JwtSettings");
@@ -66,15 +67,21 @@ namespace MuhasebeAPI.Helpers
 
             var key = Encoding.ASCII.GetBytes(secret);
 
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.Role, role)
+            };
+
+            // DisplayName claim'ini ekle
+            string displayName = string.IsNullOrEmpty(username) ? email.Split('@')[0] : username;
+            claims.Add(new Claim("displayName", displayName)); // Yeni displayName claim'i
+
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new Claim[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-                    new Claim(ClaimTypes.Email, email),
-                    new Claim(ClaimTypes.Role, role)
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
                 Issuer = issuer,

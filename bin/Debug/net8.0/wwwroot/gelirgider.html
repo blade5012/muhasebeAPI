@@ -457,7 +457,7 @@
             font-size: clamp(16px, 4vw, 22px); /* ekran boyutuna göre esneyen yazı */
             white-space: nowrap; /* yazıyı tek satırda tut */
             overflow: hidden;
-            text-overflow: ellipsis; /* çok uzarsa “…” ile kısalt */
+            text-overflow: ellipsis; /* çok uzarsa "…" ile kısalt */
         }
 
         .admin-panel-btn {
@@ -581,17 +581,46 @@
             }
         }
 
+        .welcome-message-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            font-size: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            z-index: 10000;
+            animation: fadeInRight 0.5s ease-out;
+            background-color: #28a745; /* Green for success */
+        }
+
+        .welcome-message-alert.hide {
+            animation: fadeOutRight 0.5s ease-in forwards; /* Kaybolma animasyonu */
+        }
+
+        @keyframes fadeOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(50px); }
+        }
+
     </style>
 </head>
 <body>
     <div id="alertBox"></div>
+    <div id="welcomeMessageContainer" class="alert-box alert-success" style="display: none;"></div>
     <script src="config.js"></script>
 
     <div class="header-bar">
         <button onclick="cikisYap()" class="logout-btn">Çıkış Yap</button>
         <h2 class="main-title">💰 Gelir Gider Takibi</h2>
         <!-- Yönetici Paneli Butonu -->
-        <button id="adminPanelBtn" class="admin-panel-btn" style="display: none;" onclick="window.location.href='admin.html'">Yönetici Paneli</button>
+        
         <div class="spacer"></div>
     </div>
 
@@ -678,9 +707,11 @@
             </table>
         </div>
 
-        <button id="btnPdfKategori" class="pdf-button" onclick="exportKategoriOzetPDF()">📄 Kategori Özetini PDF'ye Aktar</button>
-
-
+        <!-- Butonları yan yana getirmek için ekledim -->
+        <div style="display: flex; gap: 15px; margin-top: 20px;">
+            <button id="btnPdfKategori" class="pdf-button" onclick="exportKategoriOzetPDF()">📄 Kategori Özetini PDF'ye Aktar</button>
+            <button id="adminPanelBtn" class="pdf-button" style="display: none; background-color: #2196F3;" onclick="window.location.href='admin.html'">Yönetici Paneli</button>
+        </div>
     </div>
     <script>
         function turkceKarakterCevir(text) {
@@ -800,16 +831,25 @@
                     tableWidth: 'wrap'
                 });
 
+
+
                 // --- TOPLAM HESAPLAMA ---
                 let toplamGelir = 0, toplamGider = 0, toplamKayit = 0;
                 domRows.forEach(row => {
-                    const tur = row.cells[3]?.textContent.trim();
-                    const tutar = parseFloat(row.cells[2]?.textContent.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
-                    const kayitSayisi = parseInt(row.cells[1]?.textContent) || 0;
+                    // Kategori özet tablosundaki tutar sütunu 3. indexte (0-based) 
+                    // ve Kayıt Sayısı 1. indexte
+                    const tutarText = row.cells[2]?.textContent.trim(); 
+                    const kayitSayisiText = row.cells[1]?.textContent.trim();
 
-                    toplamKayit += kayitSayisi;
-                    if (tur === "Gelir") toplamGelir += tutar;
-                    else if (tur === "Gider") toplamGider += tutar;
+                    // Türkçe formatı İngilizce formata çevir: binlik ayırıcıları kaldır, ondalık virgülü noktaya çevir
+                    const parsedTutar = parseFloat(tutarText.replace(/\./g, '').replace(',', '.')) || 0;
+                    const parsedKayitSayisi = parseInt(kayitSayisiText) || 0;
+
+                    toplamKayit += parsedKayitSayisi;
+                    // Kategori özetinde tür sütunu 4. indexte (0-based)
+                    const tur = row.cells[3]?.textContent.trim();
+                    if (tur === "Gelir") toplamGelir += parsedTutar;
+                    else if (tur === "Gider") toplamGider += parsedTutar;
                 });
                 const kalanTutar = toplamGelir - toplamGider;
 
@@ -828,7 +868,7 @@
                 doc.text(turkceKarakterCevir(`Toplam Gider: ${toplamGider.toFixed(2).replace('.', ',')} TL`), 110, finalY + 10, { align: "left" });
                 doc.text(turkceKarakterCevir(`Kalan Tutar: ${kalanTutar.toFixed(2).replace('.', ',')} TL`), 110, finalY + 17, { align: "left" });
 
-                // PDF’i kaydet
+                // PDF'i kaydet
                 doc.save("KategoriOzetRaporu.pdf");
 
             } catch (e) {
@@ -849,9 +889,20 @@
             font-family: "Segoe UI", Arial, sans-serif;
         }
 
+            /* Yeni eklenen: Başlığı ortala */
+            .kategori-ozet-container h3 {
+                text-align: center;
+                margin-bottom: 20px;
+                color: #34495e;
+                font-size: 20px;
+                border-bottom: 2px solid #3498db;
+                padding-bottom: 8px;
+                width: 100%;
+            }
+
         .table-wrapper {
-            overflow-x: auto; /* yatay kaydırma */
-            max-height: 400px; /* dikey olarak çok uzamasını engeller */
+            overflow-x: auto;
+            max-height: 400px;
             overflow-y: auto;
             border: 1px solid #ccc;
             border-radius: 8px;
@@ -860,7 +911,7 @@
         #dgvKategoriOzet {
             border-collapse: collapse;
             width: 100%;
-            min-width: 600px; /* tablonun dar ekranlarda sıkışmasını engeller */
+            min-width: 600px;
         }
 
             #dgvKategoriOzet th, #dgvKategoriOzet td {
@@ -873,22 +924,27 @@
                 background-color: #4a90e2;
                 color: white;
                 font-weight: bold;
-                position: sticky; /* üstte sabit kalması için */
+                position: sticky;
                 top: 0;
             }
 
+        /* Butonlar için ortak stil */
         .pdf-button {
-            margin-top: 15px;
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #fff;
             background: linear-gradient(135deg, #4caf50, #81c784);
+            color: white;
+            padding: 12px 24px;
             border: none;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            border: 2px solid transparent;
         }
 
             .pdf-button:hover {
@@ -900,8 +956,39 @@
                 transform: translateY(0);
                 box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             }
-    </style>
 
+        /* Admin paneli butonu için farklı renk */
+        #adminPanelBtn {
+            background: linear-gradient(135deg, #2196F3, #64b5f6) !important;
+        }
+
+            #adminPanelBtn:hover {
+                background: linear-gradient(135deg, #1976D2, #42a5f5) !important;
+            }
+
+        /* Buton container'ı */
+        .kategori-ozet-container > div:last-child {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        /* Mobil uyumluluk */
+        @media (max-width: 600px) {
+            .kategori-ozet-container > div:last-child {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .pdf-button {
+                width: 100%;
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
     <script>
         function loadKategoriOzet(kayitlar) {
             const tbody = document.querySelector("#dgvKategoriOzet tbody");
@@ -1327,16 +1414,7 @@
         }
 
 
-        // Excel Aktar
-        //function exportToExcel() {
-        //    if (typeof ExcelJS === 'undefined') { showAlert('error', '❌ ExcelJS yüklü değil'); return; }
-        //    if (!tumKayitlar || tumKayitlar.length === 0) { showAlert('warning', '⚠️ Aktarılacak veri yok'); return; }
-        //    const wb = new ExcelJS.Workbook(); const ws = wb.addWorksheet('Gelir Gider');
-        //    ws.columns = [{ header: 'Sıra', key: 'sira', width: 10 }, { header: 'Tür', key: 'turu', width: 15 }, { header: 'Kategori', key: 'kategoriAdi', width: 20 }, { header: 'Açıklama', key: 'aciklama', width: 25 }, { header: 'Tutar', key: 'tutar', width: 15 }, { header: 'Tarih', key: 'tarih', width: 15 }];
-        //    tumKayitlar.forEach((item, i) => ws.addRow({ sira: i + 1, turu: item.turu, kategoriAdi: item.kategoriAdi ?? '-', aciklama: item.aciklama ?? '', tutar: item.tutar, tarih: new Date(item.tarih).toLocaleDateString('tr-TR') }));
-        //    ws.getColumn(5).numFmt = '#,##0.00 ₺'; ws.getColumn(5).alignment = { horizontal: 'right' };
-        //    wb.xlsx.writeBuffer().then(buffer => { const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'GelirGiderRaporu.xlsx'; link.click(); });
-        //}
+       
 
         async function exportFilteredToExcel() {
             if (typeof ExcelJS === 'undefined') {
@@ -1586,4 +1664,44 @@
         }
     </script>
 </body>
+
+<script>
+    // Sayfa yüklendiğinde hoşgeldin mesajını göster
+    document.addEventListener("DOMContentLoaded", function () {
+        const welcomeMessageContainer = document.getElementById('welcomeMessageContainer');
+        const token = sessionStorage.getItem('jwtToken');
+        const showWelcome = sessionStorage.getItem('showWelcomeMessage'); // Yeni eklenen satır
+
+        // Hoşgeldin mesajı sadece giriş yapıldıktan sonra gösterilecekse
+        if (token && showWelcome === 'true') {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const decodedToken = JSON.parse(atob(base64));
+                const displayName = decodedToken.displayName; // JWT'den displayName'i al
+
+                if (displayName) {
+                    welcomeMessageContainer.innerHTML = `✅ Hoşgeldin ${displayName}!`;
+                    welcomeMessageContainer.style.display = 'flex'; // Mesajı görünür yap
+
+                    // 2 saniye sonra mesajı kaldır
+                    setTimeout(() => {
+                        welcomeMessageContainer.classList.add('hide'); // Kaybolma animasyonunu tetikle
+                        setTimeout(() => {
+                            welcomeMessageContainer.remove(); // Elementi tamamen kaldır
+                        }, 500); // CSS animasyon süresi ile eşleşmeli
+                    }, 2000);
+                }
+            } catch (e) {
+                console.error("JWT token çözümlenirken veya hoşgeldin mesajı oluşturulurken hata oluştu:", e);
+            } finally {
+                // Mesajı gösterdikten sonra bayrağı kaldır
+                sessionStorage.removeItem('showWelcomeMessage');
+            }
+        }
+
+        // Eski loginMessage kontrolünü kaldır (zaten kaldırılmıştı)
+        sessionStorage.removeItem('loginMessage');
+    });
+</script>
 </html>

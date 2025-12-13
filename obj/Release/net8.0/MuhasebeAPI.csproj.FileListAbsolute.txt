@@ -97,3 +97,4 @@ C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\bin\Release\net8.0\Microsoft
 C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\bin\Release\net8.0\Microsoft.IdentityModel.Tokens.dll
 C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\bin\Release\net8.0\Newtonsoft.Json.dll
 C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\bin\Release\net8.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\obj\Release\net8.0\MuhasebeAPI.sourcelink.json

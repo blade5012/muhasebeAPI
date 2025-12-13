@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using System.IO;
 using Microsoft.Extensions.Options; // IOptions için
+using Microsoft.AspNetCore.Http; // IHttpContextAccessor için eklendi
 
 namespace MuhasebeAPI.Controllers
 {
@@ -18,11 +19,13 @@ namespace MuhasebeAPI.Controllers
         private readonly Baglanti _baglanti = new Baglanti();
         private readonly EmailHelper _emailHelper; // EmailHelper'ı enjekte et
         private readonly AppConfiguration _appConfig; // AppConfiguration enjekte et
+        private readonly IHttpContextAccessor _httpContextAccessor; // IHttpContextAccessor enjekte et
 
-        public AuthController(EmailHelper emailHelper, IOptions<AppConfiguration> appConfig)
+        public AuthController(EmailHelper emailHelper, IOptions<AppConfiguration> appConfig, IHttpContextAccessor httpContextAccessor)
         {
             _emailHelper = emailHelper;
             _appConfig = appConfig.Value;
+            _httpContextAccessor = httpContextAccessor; // Atama yap
         }
 
         // 1️⃣ Kullanıcı Kayıt
@@ -106,6 +109,7 @@ namespace MuhasebeAPI.Controllers
         }
 
         [HttpPost("login")]
+
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
             if (model == null || string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password))
@@ -115,7 +119,7 @@ namespace MuhasebeAPI.Controllers
             {
                 await conn.OpenAsync();
                 SqlCommand cmd = new SqlCommand(@"
-            SELECT Id, PasswordHash, PasswordSalt, IsEmailConfirmed, IsActive, Role, FailedLoginCount, LockoutEnd
+            SELECT Id, PasswordHash, PasswordSalt, IsEmailConfirmed, IsActive, Role, FailedLoginCount, LockoutEnd, Username
             FROM Users WHERE Email=@e", conn);
                 cmd.Parameters.AddWithValue("@e", model.Email);
 
@@ -126,14 +130,17 @@ namespace MuhasebeAPI.Controllers
 
                     int userId = reader.GetInt32(0);
                     string storedHash = reader.GetString(1);
-                    string salt = reader.GetString(2); // PasswordSalt
-                    bool confirmed = reader.GetBoolean(3); // IsEmailConfirmed
+                    string salt = reader.GetString(2);
+                    bool confirmed = reader.GetBoolean(3);
                     bool isActive = reader.GetBoolean(4);
                     string userRole = reader.GetString(5);
-                    int failedLoginAttempts = reader.GetInt32(6); // FailedLoginCount
-                    DateTime? lockoutEndTime = reader.IsDBNull(7) ? (DateTime?)null : reader.GetDateTime(7); // LockoutEnd
+                    int failedLoginAttempts = reader.GetInt32(6);
+                    DateTime? lockoutEndTime = reader.IsDBNull(7) ? (DateTime?)null : reader.GetDateTime(7);
 
-                    reader.Close(); // Reader'ı burada kapat, çünkü sonraki sorgular için aynı bağlantı kullanılacak.
+                    // Username'i oku (8. sütun)
+                    string username = reader.IsDBNull(8) ? "" : reader.GetString(8);
+
+                    reader.Close();
 
                     // Hesabın kilitli olup olmadığını kontrol et
                     if (lockoutEndTime.HasValue && lockoutEndTime.Value > DateTime.UtcNow)
@@ -156,7 +163,7 @@ namespace MuhasebeAPI.Controllers
                         SqlCommand updateAttemptsCmd = new SqlCommand(
                             "UPDATE Users SET FailedLoginCount=@attempts, LockoutEnd=@lockout WHERE Id=@userId", conn);
                         updateAttemptsCmd.Parameters.AddWithValue("@attempts", failedLoginAttempts);
-                        updateAttemptsCmd.Parameters.AddWithValue("@userId", userId); // userId parametresi eklendi
+                        updateAttemptsCmd.Parameters.AddWithValue("@userId", userId);
 
                         DateTime? newLockoutEndTime = null;
                         string errorMessage;
@@ -185,16 +192,33 @@ namespace MuhasebeAPI.Controllers
                             resetAttemptsCmd.Parameters.AddWithValue("@userId", userId);
                             await resetAttemptsCmd.ExecuteNonQueryAsync();
                         }
+
+                        // Son giriş zamanını güncelle
+                        try
+                        {
+                            SqlCommand updateLastLoginCmd = new SqlCommand(
+                                "UPDATE Users SET LastLoginAt=@now WHERE Id=@userId", conn);
+                            updateLastLoginCmd.Parameters.AddWithValue("@now", DateTime.UtcNow);
+                            updateLastLoginCmd.Parameters.AddWithValue("@userId", userId);
+                            await updateLastLoginCmd.ExecuteNonQueryAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"LastLoginAt güncellenirken hata: {ex.Message}");
+                        }
                     }
 
                     try
                     {
-                        Console.WriteLine($"DEBUG: Login metodu - Kullanıcı rolü: {userRole}");
+                        Console.WriteLine($"DEBUG: Login metodu - Kullanıcı adı: {username}, Rol: {userRole}");
                         // JWT Token oluştur
-                        string jwtToken = TokenHelper.GenerateJwtToken(userId, model.Email, userRole);
+                        string jwtToken = TokenHelper.GenerateJwtToken(userId, model.Email, userRole, username); // username eklendi
 
-                        // Başarılı giriş: Token ve mesajı döndür
-                        return Ok(new { token = jwtToken, message = "✅ Giriş başarılı!" });
+                        // Başarılı giriş: Token'ı döndür (mesaj frontend'de oluşturulacak)
+                        return Ok(new
+                        {
+                            token = jwtToken
+                        });
                     }
                     catch (InvalidOperationException ex)
                     {
@@ -203,9 +227,8 @@ namespace MuhasebeAPI.Controllers
                     }
                     catch (SqlException ex) // SqlException için özel yakalama
                     {
-                        // Veritabanı ile ilgili detaylı hata mesajı döndür
                         Console.WriteLine($"DEBUG: SQL Hatası (Login): {ex.Message} -- StackTrace: {ex.StackTrace}");
-                        return StatusCode(500, new { message = "❌ Veritabanı hatası oluştu. Lütfen Users tablonuzdaki sütun adlarının ve tiplerinin doğru olduğundan emin olun. Hata Detayı: " + ex.Message });
+                        return StatusCode(500, new { message = "❌ Veritabanı hatası oluştu. Hata Detayı: " + ex.Message });
                     }
                     catch (Exception ex) // Diğer genel hataları yakala
                     {
@@ -215,6 +238,237 @@ namespace MuhasebeAPI.Controllers
                 }
             }
         }
+
+        //public async Task<IActionResult> Login([FromBody] LoginModel model)
+        //{
+        //    if (model == null || string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password))
+        //        return BadRequest(new { message = "Eksik bilgi." });
+
+        //    using (SqlConnection conn = _baglanti.GetConnection())
+        //    {
+        //        await conn.OpenAsync();
+        //        SqlCommand cmd = new SqlCommand(@"
+        //    SELECT Id, PasswordHash, PasswordSalt, IsEmailConfirmed, IsActive, Role, FailedLoginCount, LockoutEnd, Username
+        //    FROM Users WHERE Email=@e", conn);
+        //        cmd.Parameters.AddWithValue("@e", model.Email);
+
+        //        using (var reader = await cmd.ExecuteReaderAsync())
+        //        {
+        //            if (!reader.Read())
+        //                return Unauthorized(new { message = "E-posta bulunamadı." });
+
+        //            int userId = reader.GetInt32(0);
+        //            string storedHash = reader.GetString(1);
+        //            string salt = reader.GetString(2);
+        //            bool confirmed = reader.GetBoolean(3);
+        //            bool isActive = reader.GetBoolean(4);
+        //            string userRole = reader.GetString(5);
+        //            int failedLoginAttempts = reader.GetInt32(6);
+        //            DateTime? lockoutEndTime = reader.IsDBNull(7) ? (DateTime?)null : reader.GetDateTime(7);
+
+        //            // Username'i oku (8. sütun)
+        //            string username = reader.IsDBNull(8) ? "" : reader.GetString(8);
+
+        //            reader.Close();
+
+        //            // Hesabın kilitli olup olmadığını kontrol et
+        //            if (lockoutEndTime.HasValue && lockoutEndTime.Value > DateTime.UtcNow)
+        //            {
+        //                TimeSpan remainingLockout = lockoutEndTime.Value - DateTime.UtcNow;
+        //                return Unauthorized(new { message = $"❌ Hesabınız {Math.Ceiling(remainingLockout.TotalMinutes)} dakika boyunca kilitlendi." });
+        //            }
+
+        //            if (!confirmed)
+        //                return Unauthorized(new { message = "E-posta doğrulanmamış." });
+
+        //            if (!isActive)
+        //                return Unauthorized(new { message = "Kullanıcı admin onayı bekliyor." });
+
+        //            // Şifre doğrulama
+        //            if (!HashingHelper.VerifyPassword(model.Password, storedHash, salt))
+        //            {
+        //                // Başarısız giriş denemesini artır
+        //                failedLoginAttempts++;
+        //                SqlCommand updateAttemptsCmd = new SqlCommand(
+        //                    "UPDATE Users SET FailedLoginCount=@attempts, LockoutEnd=@lockout WHERE Id=@userId", conn);
+        //                updateAttemptsCmd.Parameters.AddWithValue("@attempts", failedLoginAttempts);
+        //                updateAttemptsCmd.Parameters.AddWithValue("@userId", userId);
+
+        //                DateTime? newLockoutEndTime = null;
+        //                string errorMessage;
+
+        //                if (failedLoginAttempts >= 5)
+        //                {
+        //                    newLockoutEndTime = DateTime.UtcNow.AddMinutes(10);
+        //                    errorMessage = "❌ 5 hatalı giriş denemesi yaptınız. Hesabınız 10 dakika boyunca kilitlendi.";
+        //                }
+        //                else
+        //                {
+        //                    errorMessage = $"❌ Hatalı şifre. Kalan deneme hakkınız: {5 - failedLoginAttempts}.";
+        //                }
+        //                updateAttemptsCmd.Parameters.AddWithValue("@lockout", (object)newLockoutEndTime ?? DBNull.Value);
+        //                await updateAttemptsCmd.ExecuteNonQueryAsync();
+
+        //                return Unauthorized(new { message = errorMessage });
+        //            }
+        //            else
+        //            {
+        //                // Başarılı giriş, denemeleri sıfırla ve kilitlenmeyi kaldır
+        //                if (failedLoginAttempts > 0 || lockoutEndTime.HasValue)
+        //                {
+        //                    SqlCommand resetAttemptsCmd = new SqlCommand(
+        //                        "UPDATE Users SET FailedLoginCount=0, LockoutEnd=NULL WHERE Id=@userId", conn);
+        //                    resetAttemptsCmd.Parameters.AddWithValue("@userId", userId);
+        //                    await resetAttemptsCmd.ExecuteNonQueryAsync();
+        //                }
+        //            }
+
+        //            try
+        //            {
+        //                Console.WriteLine($"DEBUG: Login metodu - Kullanıcı adı: {username}, Rol: {userRole}");
+        //                // JWT Token oluştur
+        //                string jwtToken = TokenHelper.GenerateJwtToken(userId, model.Email, userRole);
+
+        //                // Eğer username boşsa, email'in @ öncesini kullan
+        //                string displayName = string.IsNullOrEmpty(username) ?
+        //                    model.Email.Split('@')[0] :
+        //                    username;
+
+        //                // Başarılı giriş: Token ve kişiselleştirilmiş mesajı döndür
+        //                return Ok(new
+        //                {
+        //                    token = jwtToken,
+        //                    message = $"✅ Hoşgeldin {displayName}!"
+        //                });
+        //            }
+        //            catch (InvalidOperationException ex)
+        //            {
+        //                Console.WriteLine($"DEBUG: InvalidOperationException in Login: {ex.Message}");
+        //                return StatusCode(500, new { message = "❌ Sunucu yapılandırma hatası oluştu." });
+        //            }
+        //            catch (SqlException ex)
+        //            {
+        //                Console.WriteLine($"DEBUG: SQL Hatası (Login): {ex.Message} -- StackTrace: {ex.StackTrace}");
+        //                return StatusCode(500, new { message = "❌ Veritabanı hatası oluştu. Hata Detayı: " + ex.Message });
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                Console.WriteLine($"DEBUG: Beklenmeyen Hata (Login): {ex.Message} -- StackTrace: {ex.StackTrace}");
+        //                return StatusCode(500, new { message = "❌ Giriş sırasında beklenmeyen bir hata oluştu: " + ex.Message });
+        //            }
+        //        }
+        //    }
+        //}
+
+        //public async Task<IActionResult> Login([FromBody] LoginModel model)
+        //{
+        //    if (model == null || string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password))
+        //        return BadRequest(new { message = "Eksik bilgi." });
+
+        //    using (SqlConnection conn = _baglanti.GetConnection())
+        //    {
+        //        await conn.OpenAsync();
+        //        SqlCommand cmd = new SqlCommand(@"
+        //    SELECT Id, PasswordHash, PasswordSalt, IsEmailConfirmed, IsActive, Role, FailedLoginCount, LockoutEnd
+        //    FROM Users WHERE Email=@e", conn);
+        //        cmd.Parameters.AddWithValue("@e", model.Email);
+
+        //        using (var reader = await cmd.ExecuteReaderAsync())
+        //        {
+        //            if (!reader.Read())
+        //                return Unauthorized(new { message = "E-posta bulunamadı." });
+
+        //            int userId = reader.GetInt32(0);
+        //            string storedHash = reader.GetString(1);
+        //            string salt = reader.GetString(2); // PasswordSalt
+        //            bool confirmed = reader.GetBoolean(3); // IsEmailConfirmed
+        //            bool isActive = reader.GetBoolean(4);
+        //            string userRole = reader.GetString(5);
+        //            int failedLoginAttempts = reader.GetInt32(6); // FailedLoginCount
+        //            DateTime? lockoutEndTime = reader.IsDBNull(7) ? (DateTime?)null : reader.GetDateTime(7); // LockoutEnd
+
+        //            reader.Close(); // Reader'ı burada kapat, çünkü sonraki sorgular için aynı bağlantı kullanılacak.
+
+        //            // Hesabın kilitli olup olmadığını kontrol et
+        //            if (lockoutEndTime.HasValue && lockoutEndTime.Value > DateTime.UtcNow)
+        //            {
+        //                TimeSpan remainingLockout = lockoutEndTime.Value - DateTime.UtcNow;
+        //                return Unauthorized(new { message = $"❌ Hesabınız {Math.Ceiling(remainingLockout.TotalMinutes)} dakika boyunca kilitlendi." });
+        //            }
+
+        //            if (!confirmed)
+        //                return Unauthorized(new { message = "E-posta doğrulanmamış." });
+
+        //            if (!isActive)
+        //                return Unauthorized(new { message = "Kullanıcı admin onayı bekliyor." });
+
+        //            // Şifre doğrulama
+        //            if (!HashingHelper.VerifyPassword(model.Password, storedHash, salt))
+        //            {
+        //                // Başarısız giriş denemesini artır
+        //                failedLoginAttempts++;
+        //                SqlCommand updateAttemptsCmd = new SqlCommand(
+        //                    "UPDATE Users SET FailedLoginCount=@attempts, LockoutEnd=@lockout WHERE Id=@userId", conn);
+        //                updateAttemptsCmd.Parameters.AddWithValue("@attempts", failedLoginAttempts);
+        //                updateAttemptsCmd.Parameters.AddWithValue("@userId", userId); // userId parametresi eklendi
+
+        //                DateTime? newLockoutEndTime = null;
+        //                string errorMessage;
+
+        //                if (failedLoginAttempts >= 5)
+        //                {
+        //                    newLockoutEndTime = DateTime.UtcNow.AddMinutes(10);
+        //                    errorMessage = "❌ 5 hatalı giriş denemesi yaptınız. Hesabınız 10 dakika boyunca kilitlendi.";
+        //                }
+        //                else
+        //                {
+        //                    errorMessage = $"❌ Hatalı şifre. Kalan deneme hakkınız: {5 - failedLoginAttempts}.";
+        //                }
+        //                updateAttemptsCmd.Parameters.AddWithValue("@lockout", (object)newLockoutEndTime ?? DBNull.Value);
+        //                await updateAttemptsCmd.ExecuteNonQueryAsync();
+
+        //                return Unauthorized(new { message = errorMessage });
+        //            }
+        //            else
+        //            {
+        //                // Başarılı giriş, denemeleri sıfırla ve kilitlenmeyi kaldır
+        //                if (failedLoginAttempts > 0 || lockoutEndTime.HasValue)
+        //                {
+        //                    SqlCommand resetAttemptsCmd = new SqlCommand(
+        //                        "UPDATE Users SET FailedLoginCount=0, LockoutEnd=NULL WHERE Id=@userId", conn);
+        //                    resetAttemptsCmd.Parameters.AddWithValue("@userId", userId);
+        //                    await resetAttemptsCmd.ExecuteNonQueryAsync();
+        //                }
+        //            }
+
+        //            try
+        //            {
+        //                Console.WriteLine($"DEBUG: Login metodu - Kullanıcı rolü: {userRole}");
+        //                // JWT Token oluştur
+        //                string jwtToken = TokenHelper.GenerateJwtToken(userId, model.Email, userRole);
+
+        //                // Başarılı giriş: Token ve mesajı döndür
+        //                return Ok(new { token = jwtToken, message = "✅ Giriş başarılı!" });
+        //            }
+        //            catch (InvalidOperationException ex)
+        //            {
+        //                Console.WriteLine($"DEBUG: InvalidOperationException in Login: {ex.Message}");
+        //                return StatusCode(500, new { message = "❌ Sunucu yapılandırma hatası oluştu." });
+        //            }
+        //            catch (SqlException ex) // SqlException için özel yakalama
+        //            {
+        //                // Veritabanı ile ilgili detaylı hata mesajı döndür
+        //                Console.WriteLine($"DEBUG: SQL Hatası (Login): {ex.Message} -- StackTrace: {ex.StackTrace}");
+        //                return StatusCode(500, new { message = "❌ Veritabanı hatası oluştu. Lütfen Users tablonuzdaki sütun adlarının ve tiplerinin doğru olduğundan emin olun. Hata Detayı: " + ex.Message });
+        //            }
+        //            catch (Exception ex) // Diğer genel hataları yakala
+        //            {
+        //                Console.WriteLine($"DEBUG: Beklenmeyen Hata (Login): {ex.Message} -- StackTrace: {ex.StackTrace}");
+        //                return StatusCode(500, new { message = "❌ Giriş sırasında beklenmeyen bir hata oluştu: " + ex.Message });
+        //            }
+        //        }
+        //    }
+        //}
 
 
         // 3️⃣ Admin onayı
@@ -557,9 +811,14 @@ namespace MuhasebeAPI.Controllers
                 insertToken.Parameters.AddWithValue("@expires", DateTime.UtcNow.AddHours(1));
                 insertToken.ExecuteNonQuery();
 
-                // 🔗 Link simülasyonu
+                // 🔗 Linki HttpContext üzerinden dinamik olarak oluştur
+                var request = _httpContextAccessor.HttpContext?.Request;
+                string scheme = request?.Scheme ?? "http"; // İstek şeması yoksa varsayılan
+                string host = request?.Host.Value ?? "localhost:5000"; // İstek hostu yoksa varsayılan
+                string baseUrl = $"{scheme}://{host}";
+                
                 string encodedToken = WebUtility.UrlEncode(token);
-                string resetUrl = $"{_appConfig.BaseUrl}/resetpassword.html?token={encodedToken}"; // Dinamik URL, appsettings.json'dan okunur
+                string resetUrl = $"{baseUrl}/resetpassword.html?token={encodedToken}"; // Dinamik URL kullanıldı
                 // Console.WriteLine($"[Simülasyon] Şifre sıfırlama linki: {resetUrl}"); // Konsola yazmayı kaldır
 
                 // E-posta gönder

@@ -1,4 +1,4 @@
-//const apiBase = window.location.protocol + "//" + window.location.host + "/api";
+
 const apiBase = `${window.location.origin}/api`;
 
 // Global showAlert fonksiyonu

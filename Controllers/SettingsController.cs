@@ -5,8 +5,8 @@ using MuhasebeAPI.Models;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json; // Newtonsoft.Json eklendi
-using Newtonsoft.Json.Linq; // JObject için eklendi
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace MuhasebeAPI.Controllers
 {
@@ -21,7 +21,9 @@ namespace MuhasebeAPI.Controllers
         public SettingsController(IConfiguration configuration)
         {
             _configuration = configuration;
-            _appSettingsPath = Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
+
+            // 🔥 ÇÖZÜM: EXE'nin gerçek klasörünü al
+            _appSettingsPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
         }
 
         [HttpGet("email")]
@@ -42,10 +44,14 @@ namespace MuhasebeAPI.Controllers
 
             try
             {
+                if (!System.IO.File.Exists(_appSettingsPath))
+                {
+                    return StatusCode(500, new { message = $"appsettings.json bulunamadı: {_appSettingsPath}" });
+                }
+
                 var jsonString = await System.IO.File.ReadAllTextAsync(_appSettingsPath);
                 var json = JObject.Parse(jsonString);
 
-                // EmailSettings bölümünü güncelle
                 json["EmailSettings"]["SmtpServer"] = updatedSettings.SmtpServer;
                 json["EmailSettings"]["SmtpPort"] = updatedSettings.SmtpPort;
                 json["EmailSettings"]["SmtpUsername"] = updatedSettings.SmtpUsername;

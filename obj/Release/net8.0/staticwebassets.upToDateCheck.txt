@@ -36,11 +36,11 @@ wwwroot\icons\favicon.ico
 wwwroot\icons\icon-192.png
 wwwroot\icons\icon-512.png
 wwwroot\admin.html
-wwwroot\gelirgider.html
+wwwroot\login.js
 wwwroot\grafik.html
 wwwroot\kategoriler.html
 wwwroot\login.html
-wwwroot\login.js
+wwwroot\gelirgider.html
 wwwroot\manifest.json
 wwwroot\register.html
 wwwroot\register.js

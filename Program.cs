@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.Hosting.WindowsServices;
+﻿
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Http; // IHttpContextAccessor için eklendi
 
 using MuhasebeAPI.Helpers; // Baglanti sınıfı için namespace
 using MuhasebeAPI.Models; // EmailSettings modeli için namespace
@@ -10,7 +11,7 @@ using Microsoft.Extensions.Options; // IOptions için
 var builder = WebApplication.CreateBuilder(args);
 
 // Servis olarak çalıştığını Windows'a bildir
-builder.Host.UseWindowsService();
+
 
 // Services
 builder.Services.AddControllers();
@@ -23,10 +24,31 @@ builder.Services.AddScoped<EmailHelper>(sp =>
 {
     var emailSettingsMonitor = sp.GetRequiredService<IOptionsMonitor<EmailSettings>>(); // Monitor kullanıldı
     var baglanti = sp.GetRequiredService<Baglanti>();
-    var appConfig = sp.GetRequiredService<IOptions<AppConfiguration>>();
-    return new EmailHelper(emailSettingsMonitor, baglanti, appConfig);
+    var appConfig = sp.GetRequiredService<AppConfiguration>(); // Doğrudan AppConfiguration nesnesini al
+    return new EmailHelper(emailSettingsMonitor, baglanti, Options.Create(appConfig)); // Options.Create ile sarmala
 }); // EmailHelper'ı bağımlılıklarıyla Scoped olarak kaydet
-builder.Services.Configure<AppConfiguration>(builder.Configuration.GetSection("AppConfiguration")); // AppConfiguration yükle
+
+// IHttpContextAccessor'ı ekle
+builder.Services.AddHttpContextAccessor();
+
+// AppConfiguration'ı dinamik olarak ayarla
+builder.Services.AddScoped(sp => {
+    var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+    var request = httpContextAccessor.HttpContext?.Request;
+    
+    string baseUrl = "";
+    if (request != null) {
+        string scheme = request.Scheme ?? "http"; // Null ise varsayılan olarak http
+        string host = request.Host.Value ?? "localhost:5000"; // Null ise varsayılan host
+        baseUrl = $"{scheme}://{host}";
+    } else {
+        // HttpContext.Request null ise, varsayılan bir URL kullan
+        // Genellikle uygulamanın dinlediği adres kullanılır. Program.cs'deki UseUrls ile eşleşmeli.
+        baseUrl = "http://0.0.0.0:5000"; // veya uygulamanın çalıştığı varsayılan adres
+    }
+
+    return new AppConfiguration { BaseUrl = baseUrl };
+});
 
 // Baglanti sınıfı için DI
 builder.Services.AddScoped<Baglanti>();
@@ -60,8 +82,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-// !!! URL burada ayarlanıyor !!!
-builder.WebHost.UseUrls("http://0.0.0.0:5000");
+// Railway port ayarı - PORT environment variable'ını kullan
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+builder.WebHost.UseUrls($"http://*:{port}");
 
 // TokenHelper'ı IConfiguration ile başlat
 TokenHelper.Initialize(builder.Configuration);
