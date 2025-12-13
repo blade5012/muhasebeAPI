@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MuhasebeAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e95c5883b8b8f58b0b7c1b99b71e295e4939d763")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+43880d22373d0fabec81a8bc050b01fb77c2dbad")]
 [assembly: System.Reflection.AssemblyProductAttribute("MuhasebeAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MuhasebeAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
