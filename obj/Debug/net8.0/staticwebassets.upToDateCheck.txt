@@ -1,7 +1,6 @@
 wwwroot\admin.html
 wwwroot\admin.js
 wwwroot\app.js
-wwwroot\config.js
 wwwroot\fonts\segoeui.ttf
 wwwroot\fonts\segoeuib.ttf
 wwwroot\Font\DejaVuSans-Bold.ttf
@@ -47,3 +46,4 @@ wwwroot\register.js
 wwwroot\reset.js
 wwwroot\resetpassword.html
 wwwroot\sw.js
+wwwroot\config.js

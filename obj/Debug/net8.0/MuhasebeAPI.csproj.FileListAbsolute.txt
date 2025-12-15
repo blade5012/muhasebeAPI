@@ -9,6 +9,7 @@ C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\bin\Debug\net8.0\wwwroot\log
 C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\bin\Debug\net8.0\wwwroot\resetpassword.html
 C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\bin\Debug\net8.0\appsettings.json
+C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\bin\Debug\net8.0\railway.json
 C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\bin\Debug\net8.0\MuhasebeAPI.staticwebassets.runtime.json
 C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\bin\Debug\net8.0\MuhasebeAPI.staticwebassets.endpoints.json
 C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\bin\Debug\net8.0\MuhasebeAPI.exe
@@ -60,4 +61,3 @@ C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\obj\Debug\net8.0\refint\Muha
 C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\obj\Debug\net8.0\MuhasebeAPI.pdb
 C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\obj\Debug\net8.0\MuhasebeAPI.genruntimeconfig.cache
 C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\obj\Debug\net8.0\ref\MuhasebeAPI.dll
-C:\Users\blade\source\repos\MuhasebeAPI\MuhasebeAPI\bin\Debug\net8.0\railway.json

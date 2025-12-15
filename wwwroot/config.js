@@ -1,5 +1,4 @@
-
-const apiBase = `${window.location.origin}/api`;
+const apiBase = "https://muhasebeapi-production.up.railway.app";
 
 // Global showAlert fonksiyonu
 window.showAlert = function (type, msg) {
