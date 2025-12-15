@@ -116,5 +116,36 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllers();
 });
 
+
+
+// Program.cs'nin SONUNA, app.Run()'dan önce ekleyin:
+app.MapGet("/api/test/sql", async (Baglanti baglanti) =>
+{
+    try
+    {
+        using var conn = baglanti.GetConnection();
+        await conn.OpenAsync();
+        return Results.Ok(new
+        {
+            success = true,
+            message = "✅ SQL Server bağlantısı BAŞARILI",
+            server = conn.DataSource,
+            database = conn.Database,
+            source = "Railway MSSQL_URL"
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            title: "❌ SQL Server bağlantısı BAŞARISIZ",
+            detail: $"Hata: {ex.Message}\nMSSQL_URL: {Environment.GetEnvironmentVariable("MSSQL_URL")}",
+            statusCode: 500
+        );
+    }
+});
+
+
+
+
 app.Run();
 
